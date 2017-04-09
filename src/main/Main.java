@@ -3,7 +3,6 @@ package main;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FilePermission;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -158,7 +157,10 @@ public class Main {
 		}
 	}
 
-	void fitWordAtH(int x, int y){
+	boolean fitWordAtH(int x, int y){
+		if(x==dimx || y == dimy){
+			return true;
+		}
 		if(debug>1){
 			System.err.println("fitWordAtH(): x =" + x + "  y: " +y);
 			if(debug > 2){
@@ -178,13 +180,19 @@ public class Main {
 				}
 			}
 			setWordH(word.substring(l), x+l, y);
-			fitWordAtV(y+1, x);
+			if(fitWordAtV(y+1, x)){
+				return true;
+			}
 			removeWordAtH(x+l, y);
 		}
+		return false;
 	}
 
 
-	void fitWordAtV(int x, int y){
+	boolean fitWordAtV(int x, int y){
+		if(x==dimx || y == dimy){
+			return true;
+		}
 		if(debug>1){
 			System.err.println("fitWordAtV(): x =" + x + "  y: " +y);
 			if(debug > 2){
@@ -202,9 +210,12 @@ public class Main {
 			if(x>3){
 				logCanvas();//printCanvas();
 			}
-			fitWordAtH(y, x);
+			if(fitWordAtH(y, x)){
+				return true;
+			}
 			removeWordAtV(x, y+l);
 		}
+		return false;
 
 	}
 
@@ -250,7 +261,7 @@ public class Main {
 		System.out.println("Hello");
 		Main main = new Main();
 
-		main.setSolution("szeretet");
+		main.setSolution("szeret");
 		main.generate();
 
 	}
