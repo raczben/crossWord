@@ -11,75 +11,27 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map.Entry;
 
 public class Main {
 	String solution; 	// This should be find out by the user.
 	List<String> dictionaryWords;	// All available words
-	int dimx, dimy;
-	Character canvas[];
-	private int debug = 2;
+	//	Character canvas[];
+	Canvas _canvas_;
+	private int debug = 1;
 	PrintStream logFile;
+	int dimx, dimy;
+	PerformanceMeter perfMet;
 	
-	
 
-	Character getCharAt(int x, int y){
-		int pos = x + y*dimx;
-		if(x>=dimx || y>=dimy){
-			return null;
-		}
-		return canvas[pos];
-	}
-
-	void setCharAt(Character ch, int x, int y){
-		if(x>=dimx || y>=dimy){
-			return;
-		}
-
-		int pos = x + y*dimx;
-		canvas[pos] = ch;
-	}
-
-	void setWordH(String word, int x, int y){
-		for(int i = 0; i<word.length(); i++){
-			setCharAt(word.charAt(i), x+i, y);
-		}
-	}
-
-	void setWordV(String word, int x, int y){
-		for(int i = 0; i<word.length(); i++){
-			setCharAt(word.charAt(i), x, y+i);
-		}
-	}
-
-	String getWordAtH(int x, int y){
-		String ret = new String();
-		for(int i= x; i<dimx; i++){
-			Character ch = getCharAt(i, y);
-			if(ch == null || ch.equals(' ')){
-				return ret;
-			}
-			ret += ch;
-		}
-		return ret;
-	}
-
-	String getWordAtV(int x, int y){
-		String ret = new String();
-		for(int i= y; i<dimy; i++){
-			Character ch = getCharAt(x, i);
-			if(ch == null || ch.equals(" ")){
-				return ret;
-			}
-			ret += ch;
-		}
-		return ret;
-	}
 
 	Main(int dimx, int dimy){
+		_canvas_ = new Canvas(dimx, dimy);
 		this.dimx = dimx;
 		this.dimy = dimy;
 		readWords();
 		generateCanvas();
+		perfMet = new PerformanceMeter(3);
 		try {
 			logFile = new PrintStream(new File("log.txt"));
 		} catch (FileNotFoundException e) {
@@ -92,15 +44,14 @@ public class Main {
 		this(0, 0);
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		Main main = (Main) obj;
-		return Arrays.equals(canvas, main.canvas);
-	}
+	//	@Override
+	//	public boolean equals(Object obj) {
+	//		Main main = (Main) obj;
+	//		return Arrays.equals(canvas, main.canvas);
+	//	}
 
 	private void generateCanvas() {
-		canvas = new Character[dimx*dimy];
-
+		_canvas_ = new Canvas(dimx, dimy);
 	}
 
 	void readWords(){
@@ -135,31 +86,12 @@ public class Main {
 	private void setSolution(String sol) {
 		solution = sol;
 		dimy = sol.length();
-		dimx = dimy;
+		dimx = dimy+2;
 	}
 
-	void removeWordAtH(int x, int y){
-		for(int i = x; i< dimx; i ++){
-			Character ch = getCharAt(i, y);
-			if(ch == null || ch.equals(" ")){
-				return;
-			}
-			setCharAt(null, i, y);
-		}
-	}
-	void removeWordAtV(int x, int y){
-		for(int i = y; i< dimy; i ++){
-			Character ch = getCharAt(x, i);
-			if(ch == null || ch.equals(" ")){
-				return;
-			}
-			setCharAt(null, x, i);
-		}
-	}
-
-	boolean fitWordAtH(int x, int y){
+	Canvas fitWordAtH(int x, int y, Canvas canvas) throws LowPerformanceException{
 		if(x==dimx || y == dimy){
-			return true;
+			return canvas;
 		}
 		if(debug>1){
 			System.err.println("fitWordAtH(): x =" + x + "  y: " +y);
@@ -167,8 +99,9 @@ public class Main {
 				System.err.println("fitWordAtH(): Canvas: >>\n" + toString() + "<<");
 			}
 		}
-		String wordpart = getWordAtH(x, y);
-		String[] words = getWordsContains(wordpart);
+		Pair wordpartPair = canvas.getWordAt(x, y, Direction.HORIZONTAL);
+		String wordpart = wordpartPair.str;
+		String[] words = getWordsContains(wordpart, wordpartPair.spaceLen);
 		int l = wordpart.length();
 		for(String word : words){
 			if(debug > 0){
@@ -179,19 +112,19 @@ public class Main {
 					System.err.println("fitWordAtH(): setWordH: " + word);
 				}
 			}
-			setWordH(word.substring(l), x+l, y);
-			if(fitWordAtV(y+1, x)){
-				return true;
+			Canvas retcanv = fitWordAtV(y+1, x, canvas.addWord(word.substring(l), x+l, y, Direction.HORIZONTAL));
+			if(retcanv != null){
+				return retcanv;
 			}
-			removeWordAtH(x+l, y);
+			//			removeWordAtH(x+l, y);
 		}
-		return false;
+		return null;
 	}
 
 
-	boolean fitWordAtV(int x, int y){
+	Canvas fitWordAtV(int x, int y, Canvas canvas) throws LowPerformanceException{
 		if(x==dimx || y == dimy){
-			return true;
+			return canvas;
 		}
 		if(debug>1){
 			System.err.println("fitWordAtV(): x =" + x + "  y: " +y);
@@ -199,32 +132,40 @@ public class Main {
 				System.err.println("fitWordAtV(): Canvas: >>\n" + toString() + "<<");
 			}
 		}
-		String wordpart = getWordAtV(x, y);
-		String[] words = getWordsContains(wordpart);
+		Pair wordpartPair = canvas.getWordAt(x, y, Direction.VERTICAL);
+		String wordpart = wordpartPair.str;
+		String[] words = getWordsContains(wordpart, wordpartPair.spaceLen);
 		int l = wordpart.length();
 		for(String word : words){
 			if(debug > 3){
 				System.err.println("fitWordAtV(): setWordV: " + word);
 			}
-			setWordV(word.substring(l), x, y+l);
-			if(x>3){
-				logCanvas();//printCanvas();
+
+			perfMet.newValue(Integer.max(x, y));
+			if(x>4){
+				logCanvas(canvas, x, y);//printCanvas();
 			}
-			if(fitWordAtH(y, x)){
-				return true;
+			Canvas retcanv = fitWordAtH(y, x, canvas.addWord(word.substring(l), x, y+l, Direction.VERTICAL));
+			if(retcanv != null){
+				return retcanv;
 			}
-			removeWordAtV(x, y+l);
+			//			removeWordAtV(x, y+l);
 		}
-		return false;
+		return null;
 
 	}
 
 
-	private void logCanvas() {
-		logFile.println(">>");
-		logFile.println(toString());
+	private void logCanvas(Canvas canvas, int x, int y) {
+
+		logFile.println(x + y+ " >>");
+		logFile.println(canvas.toString());
 		logFile.println("<<");
 		logFile.println("");
+	}
+
+	private void logCanvas() {
+		logCanvas(_canvas_, -1, -1);
 	}
 
 	void printCanvas(){
@@ -232,18 +173,16 @@ public class Main {
 	}
 
 	public String toString() {
-		String ret = "";
-		for(int i = 0; i < dimy; i ++){
-			ret += getWordAtH(0, i) + "\n"; 
-		}
-		return ret;
+		return _canvas_.toString();
 	}
 
-	String[] getWordsContains(String wordpart){
+	String[] getWordsContains(String wordpart, int maxLen){
 		List<String> ret = new ArrayList<String>();
 		for(String word :dictionaryWords){
 			if(word.startsWith(wordpart) ){  //|| word.startsWith(wordpart, 1)
-				ret.add(word);
+				if(wordpart.length()<=maxLen){
+					ret.add(word);
+				}
 			}
 		}
 		Collections.shuffle(ret);
@@ -252,16 +191,24 @@ public class Main {
 
 	void generate(){
 		generateCanvas();
-		setWordV(solution, 0, 0);
-		fitWordAtH(0, 0);
-		System.out.println(canvas);
+		_canvas_.setWordV(solution, 0, 0);
+		for(int i = 0; i<100; i++){
+			try {
+				perfMet.reset();
+				System.out.println(fitWordAtH(0, 0, _canvas_));
+			} catch (LowPerformanceException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		System.out.println(_canvas_);
 	}
 
 	public static void  main(String[] args) {
 		System.out.println("Hello");
 		Main main = new Main();
 
-		main.setSolution("szeret");
+		main.setSolution("szer");
 		main.generate();
 
 	}
