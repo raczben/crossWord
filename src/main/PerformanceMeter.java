@@ -1,39 +1,75 @@
 package main;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
-
+/**
+ * PerformanceMeter: Measure the performance of the generator/finder. If the
+ * performance is low the generator should restart.
+ * The cause:
+ * 	The generation based on choosing random words, which match the other part of
+ * 	the canvas. BUT if the first word is too "strange" there will be no solution,
+ *  however to realise this will need a lot of time. So in the following two
+ *  cases the generation will be reseted and restarted from the beginning:
+ * 1: If the trials reached a maximum count. (aka. the maxCount field)
+ * 2: If the trials are not so far from the "nothing". This measured the actual
+ *  dimension.
+ * 
+ * @author Benedek Racz
+ *
+ */
 public class PerformanceMeter {
-	double limit;
-	int count;
-	double performanceValue;
-	int minCount = 100;
-	int maxCount = 100000;
-	int microCounter = 0;
-	PrintStream logFile;
-	static int batchCounter = 0;
+	// A fictive minimum limit of the performance. Higher limit enable more
+	// computing, lower limit resets earlier. See newValue() for more details.
+	private double limit;
 	
+	// The count of the trial from the last reset. Each word matching/trying
+	// increase this.
+	private int count;
+	
+	// This is the value of the performance (from the last reset) Higher value
+	// means a solution is near, lover value means we should reset the generator.
+	// See newValue() for more details.
+	private double performanceValue;
+	
+	// This is the global maximum limit. If the count of the trying reach this
+	//	value the generator should be restarted with new seed.
+	private int maxCount = 100000;
+	
+	// The performance measure is too complicated to calculate in each step.
+	// This is a period to check the performance.
+	private int minCount = 100;
+	
+	// This is the corresponding counter for the minCount period. 
+	private int microCounter = 0;
+	
+	/**
+	 * Constructor 
+	 * @param limit
+	 */
 	public PerformanceMeter(int limit) {
 		this.limit = 0.02;
-		try {
-			logFile = new PrintStream(new File("perfLog" + batchCounter + ".txt"));
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		reset();
-//		performanceValue = limit* 2;
-//		count  = 0;
 	}
 	
+	/**
+	 * This function should be called in each trying. It counts the performance
+	 * in each "minCount"-th step. If the performance is low this will throw a
+	 * LowPerformanceException to restart the generator with new seed.
+	 * @param val
+	 * @throws LowPerformanceException
+	 */
 	void newValue(int val) throws LowPerformanceException{
-		count++;
-		microCounter++;
+		count++;			// Increase the global counter
+		microCounter++;		// Increase the minCount counter
+		
+		// The performance is calculated by a SoS aka. Sum of Squares. (aka.
+		// Pitagoras theorem). This is better than linear sum because states
+		// near the solution has higher priority.
 		performanceValue += val*val;
+		
+		// Microcounter period.
 		if(microCounter > minCount){
-			logFile.print(performanceValue + " ");
-			microCounter = 0;
+			microCounter = 0;	// reset
+			
+			// The two condition of the low performance.
 			if(limit>Math.sqrt(performanceValue)/(double)count){
 				throw new LowPerformanceException("Performance val: " + performanceValue + " limit: " + limit + " count: " + count);
 			}
@@ -42,15 +78,13 @@ public class PerformanceMeter {
 			}
 		}
 	}
-
+ 
+	/**
+	 * Global reset
+	 */
 	public void reset() {
 		count = 0;
-		performanceValue = limit* 2;
-//		batchCounter++;
-		logFile.println("");
+		performanceValue = limit* 2;	// Do not reset to 0 to enable run a bit...
 	}
 
-//	void newValue(Integer val) throws LowPerformanceException{
-//		newValue(val.intValue());
-//	}
 }

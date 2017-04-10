@@ -8,74 +8,90 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
 
+/**
+ * 
+ * @author Benedek Racz
+ *
+ */
 public class Main {
-	String solution; 	// This should be find out by the user.
-	List<String> dictionaryWords;	// All available words
-	Map<String, List<String>> dictionaryWordsMap;
-	//	Character canvas[];
-	Canvas _canvas_;
+	private String solution; 	// This should be find out by the user.
+
+	// Contains all available words. This is a map to helps for matching. The
+	// keys of the map is the starting letter(s) of the map.
+	private Map<String, List<String>> dictionaryWordsMap;
+
+	// The canvas. This stores the letters/characters of the game.
+	private Canvas _canvas_;
+
+	// Increment this field for more debug information.
 	private int debug = 1;
-	PrintStream logFile;
-	int dimx, dimy;
-	PerformanceMeter perfMet;
+
+	// Debug information file.
+	private PrintStream logFile;
+
+	// The dimension of the canvas.
+	private int dimx, dimy;
+
+	// The performance meter throw an exception when the performance of the
+	// generation is low in order to restart the generation with new seed. 
+	private PerformanceMeter perfMet;
+
+	// The generator of the pseudo-random seed. 
 	private Random generator;
 
-	//	Alphabet
-
-
-
-
+	
+	/**
+	 *  Constructor 
+	 * @param dimx
+	 * @param dimy
+	 */
 	Main(int dimx, int dimy){
-		_canvas_ = new Canvas(dimx, dimy);
-		this.dimx = dimx;
+		this.dimx = dimx;					// Set the dimension
 		this.dimy = dimy;
-		readWords();
-		generateCanvas();
-		perfMet = new PerformanceMeter(3);
+		readWords();						// Read all words from the dictionary.
+		generateCanvas();					// Generate canvas
+		perfMet = new PerformanceMeter(3);	// Create performance meter.
+
+		// Open the debug logfile.
 		try {
 			logFile = new PrintStream(new File("log.txt"));
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
+	/**
+	 * Default constructor.
+	 */
 	Main(){
 		this(0, 0);
 	}
 
-	//	@Override
-	//	public boolean equals(Object obj) {
-	//		Main main = (Main) obj;
-	//		return Arrays.equals(canvas, main.canvas);
-	//	}
+	/**
+	 * Two generator equals if its canvas are equals.
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		Main main = (Main) obj;
+		return main._canvas_.equals(this._canvas_);
+	}
 
+	/**
+	 * 
+	 */
 	private void generateCanvas() {
 		_canvas_ = new Canvas(dimx, dimy);
 	}
 
-	/*String[] string2Fregments(String str){
-		String ret = str.toCharArray();
-		String single;
-		String dual;
-		for(char ch : str.toCharArray()){
-
-		}
-
-		return ret;
-	}*/
-
-
-	void readWords(){
-		dictionaryWords = new ArrayList<String>();
+	/**
+	 * Read all words and put them into the map.
+	 */
+	private void readWords(){
 		dictionaryWordsMap = new HashMap<String, List<String>>();
 		String fileName = "hungarian" + ".txt";
 		System.out.println(fileName);
@@ -86,9 +102,6 @@ public class Main {
 			System.out.println("is is null");
 		}
 
-		//		for()
-		//		dictionaryWordsMap.put(ch -> , new ArrayList<String>());
-
 		try {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF8"));
 
@@ -96,9 +109,7 @@ public class Main {
 			while ((line = reader.readLine()) != null) {
 				//				if(line.length()>2){
 				line = line.toLowerCase();
-				dictionaryWords.add(replaceSpecials(line));
-
-				//					for(Character ch : line.toCharArray()){
+				line = replaceSpecials(line);
 				try{
 					dictionaryWordsMap.get(line.substring(0, 1)).add(line);
 				}
@@ -117,8 +128,6 @@ public class Main {
 					catch(Exception ex1){
 					}
 				}
-				//					}
-				//				}
 			}            
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -126,7 +135,7 @@ public class Main {
 		} finally {
 			try { is.close(); } catch (Throwable ignore) {}
 		}
-		dictionaryWords.remove(0);
+		//		dictionaryWords.remove(0);
 
 	}
 
@@ -144,15 +153,28 @@ public class Main {
 		return word;
 	}
 
+	/**
+	 * Set the solution to be find out by the user. This word will be the first
+	 * vertical word on the canvas.
+	 * @param sol
+	 */
 	private void setSolution(String sol) {
 		solution = sol;
 		dimy = sol.length()+5;
 		dimx = dimy+3;
 	}
 
-
-
-	Canvas fitWordAt(int x, int y, Canvas canvas, Direction direction) throws LowPerformanceException{
+	/**
+	 * This will be called recursively during the generation. 
+	 * 
+	 * @param x		Find word for this position
+	 * @param y 	Find word for this position
+	 * @param canvas This is the current state of the canvas.
+	 * @param direction	Find word in this direction (from the x-y position)
+	 * @return	null if cannot match or the canvas if it match.
+	 * @throws LowPerformanceException	When the performance reach one of the criteria.
+	 */
+	private Canvas fitWordAt(int x, int y, Canvas canvas, Direction direction) throws LowPerformanceException{
 		if(x==dimx || y == solution.length()){
 			return canvas;
 		}
@@ -191,29 +213,28 @@ public class Main {
 			if(retcanv != null){
 				return retcanv;
 			}
-			//			removeWordAtV(x, y+l);
 		}
 		return null;
 
 	}
 
 
+	/**
+	 * Log for debug reason.
+	 * @param canvas
+	 * @param x
+	 * @param y
+	 */
 	private void logCanvas(Canvas canvas, int x, int y) {
-
 		logFile.println(x + y+ " >>");
 		logFile.println(canvas.toString());
 		logFile.println("<<");
 		logFile.println("");
 	}
 
-	private void logCanvas() {
-		logCanvas(_canvas_, -1, -1);
-	}
-
-	void printCanvas(){
-		System.out.println(toString());
-	}
-
+	/**
+	 * The string representation of the Main is the string representation of the canvas.
+	 */
 	public String toString() {
 		return _canvas_.toString();
 	}
@@ -255,6 +276,9 @@ public class Main {
 		return ret.toArray(new String[0]);
 	}
 
+	/**
+	 * The GENERATE function. This starts/restarts the generation with different seeds.
+	 */
 	void generate(){
 		generateCanvas();
 		_canvas_.setWordV(solution, 0, 0);
@@ -271,16 +295,18 @@ public class Main {
 		System.out.println(_canvas_);
 	}
 
+	/**
+	 * The public main function.
+	 * @param args
+	 */
 	public static void  main(String[] args) {
 		System.out.println("Hello");
 		Main main = new Main();
 		long startTime = System.currentTimeMillis();
-		main.setSolution("szeret");
+		main.setSolution("szeret");			// <---- EDIT THIS LINE FOR DIFFERENT SOLUTIONS.
 		main.generate();
 		long estimatedTime = System.currentTimeMillis() - startTime;
 		System.out.print("estimatedTime: " + estimatedTime + "ms");
-		//		String input = System.console().readLine();
-
 	}
 
 
