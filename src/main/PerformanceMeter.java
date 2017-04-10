@@ -15,7 +15,7 @@ public class PerformanceMeter {
 	static int batchCounter = 0;
 	
 	public PerformanceMeter(int limit) {
-		this.limit = 0.25;
+		this.limit = 0.02;
 		try {
 			logFile = new PrintStream(new File("perfLog" + batchCounter + ".txt"));
 		} catch (FileNotFoundException e) {

@@ -10,7 +10,7 @@ public class Canvas {
 	
 
 	// Where this character occurs the canvas can be filled with characters.
-	static final Character fillableCellCharacter = ' ';		  
+	static final Character fillableCellCharacter = '1';		  
 
 	public Canvas(int dimx, int dimy) {
 		this.dimx = dimx;
@@ -20,8 +20,17 @@ public class Canvas {
 
 	public String toString() {
 		String ret = "";
-		for(int i = 0; i < dimy; i ++){
-			ret += getWordAt(0, i, Direction.HORIZONTAL).str + "\n"; 
+		for(int y = 0; y < dimy; y ++){
+			for(int x = 0; x < dimx; x ++){
+//			ret += getWordAt(0, i, Direction.HORIZONTAL).str + "\n";
+				Character ch = getCharAt(x, y);
+				if(null == ch){
+					ret += "2";
+//					continue;
+				}else{
+				ret += ch;}
+			}
+			ret += "\n";
 		}
 		return ret;
 	}
