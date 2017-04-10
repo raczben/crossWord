@@ -2,5 +2,12 @@ package main;
 
 public enum Direction {
 	HORIZONTAL,
-	VERTICAL
+	VERTICAL;
+
+	public Direction invert() {
+		if(this == HORIZONTAL){
+			return VERTICAL;
+		}
+		return HORIZONTAL;
+	}
 }

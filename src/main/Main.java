@@ -65,12 +65,12 @@ public class Main {
 			System.out.println("is is null");
 		}
 		try {
-			BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF8"));
 
 			String line;
 			while ((line = reader.readLine()) != null) {
 				if(line.length()>2){
-					dictionaryWords.add(line);
+					dictionaryWords.add(replaceSpecials(line));
 				}
 			}            
 		} catch (IOException e) {
@@ -83,69 +83,59 @@ public class Main {
 
 	}
 
+	/**
+	 * Replaces all special characer in a word to simpler one.
+	 * Ex.: in Hungarian: long vowels to shorts.
+	 * @param line
+	 * @return
+	 */
+	private String replaceSpecials(String word) {
+		word.replaceAll("\u0243" , "o");	// long o
+		word.replaceAll("\u0337" , "\u0246");	// long o^
+		word.replaceAll("\u0369" , "\u0252");	// long u^
+		word.replaceAll("\u0237" , "i");	// long i^
+		return word;
+	}
+
 	private void setSolution(String sol) {
 		solution = sol;
 		dimy = sol.length();
 		dimx = dimy+2;
 	}
 
-	Canvas fitWordAtH(int x, int y, Canvas canvas) throws LowPerformanceException{
+
+
+	Canvas fitWordAt(int x, int y, Canvas canvas, Direction direction) throws LowPerformanceException{
 		if(x==dimx || y == dimy){
 			return canvas;
 		}
 		if(debug>1){
-			System.err.println("fitWordAtH(): x =" + x + "  y: " +y);
+			System.err.println("fitWordAt(): x =" + x + "  y: " +y);
 			if(debug > 2){
-				System.err.println("fitWordAtH(): Canvas: >>\n" + toString() + "<<");
+				System.err.println("fitWordAt(): Canvas: >>\n" + toString() + "<<");
 			}
 		}
-		Pair wordpartPair = canvas.getWordAt(x, y, Direction.HORIZONTAL);
-		String wordpart = wordpartPair.str;
-		String[] words = getWordsContains(wordpart, wordpartPair.spaceLen);
-		int l = wordpart.length();
-		for(String word : words){
-			if(debug > 0){
-				if(x== 0 && y == 0){
-					System.err.println("fitWordAtH(): START FROM THE BEGINNING!!! (" + word + ")");
-				}
-				if(debug > 3){
-					System.err.println("fitWordAtH(): setWordH: " + word);
-				}
-			}
-			Canvas retcanv = fitWordAtV(y+1, x, canvas.addWord(word.substring(l), x+l, y, Direction.HORIZONTAL));
-			if(retcanv != null){
-				return retcanv;
-			}
-			//			removeWordAtH(x+l, y);
-		}
-		return null;
-	}
-
-
-	Canvas fitWordAtV(int x, int y, Canvas canvas) throws LowPerformanceException{
-		if(x==dimx || y == dimy){
-			return canvas;
-		}
-		if(debug>1){
-			System.err.println("fitWordAtV(): x =" + x + "  y: " +y);
-			if(debug > 2){
-				System.err.println("fitWordAtV(): Canvas: >>\n" + toString() + "<<");
-			}
-		}
-		Pair wordpartPair = canvas.getWordAt(x, y, Direction.VERTICAL);
+		Pair wordpartPair = canvas.getWordAt(x, y, direction);
 		String wordpart = wordpartPair.str;
 		String[] words = getWordsContains(wordpart, wordpartPair.spaceLen);
 		int l = wordpart.length();
 		for(String word : words){
 			if(debug > 3){
-				System.err.println("fitWordAtV(): setWordV: " + word);
+				System.err.println("fitWordAt(): setWordV: " + word);
 			}
 
 			perfMet.newValue(Integer.max(x, y));
 			if(x>4){
 				logCanvas(canvas, x, y);//printCanvas();
 			}
-			Canvas retcanv = fitWordAtH(y, x, canvas.addWord(word.substring(l), x, y+l, Direction.VERTICAL));
+			
+			Canvas retcanv;
+			if(direction.equals(Direction.VERTICAL)){
+				retcanv = fitWordAt(y, x, canvas.addWord(word.substring(l), x, y+l, Direction.VERTICAL), Direction.HORIZONTAL);
+			} else { // VERICAL
+				retcanv = fitWordAt(y+1, x, canvas.addWord(word.substring(l), x+l, y, Direction.HORIZONTAL), Direction.VERTICAL);
+			}
+				
 			if(retcanv != null){
 				return retcanv;
 			}
@@ -195,7 +185,7 @@ public class Main {
 		for(int i = 0; i<100; i++){
 			try {
 				perfMet.reset();
-				System.out.println(fitWordAtH(0, 0, _canvas_));
+				System.out.println(fitWordAt(0, 0, _canvas_, Direction.HORIZONTAL));
 			} catch (LowPerformanceException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
