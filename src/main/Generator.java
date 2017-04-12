@@ -405,7 +405,8 @@ public class Generator {
 			try {
 				rndGen = new Random(i);
 				perfMet.reset();
-				System.out.println(fitWordAt(_canvas_, Direction.HORIZONTAL, 1));
+				Canvas cnv = fitWordAt(_canvas_, Direction.HORIZONTAL, 1);
+				System.out.println(cnv);
 			} catch (LowPerformanceException e) {
 				// TODO Auto-generated catch block
 				System.err.println(e);
