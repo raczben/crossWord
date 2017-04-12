@@ -34,15 +34,22 @@ public class Main {
 		
 		Options options = new Options();
 
-        Option input = new Option("s", "solution", true, "This will be the "
+        Option solutionOption = new Option("s", "solution", true, "This will be the "
         		+ "solution of the cross word game. (aka. This will be the first"
         		+ " vertical word on the canvas.)");
-
-        Option numOfBatchOption = new Option("n", "numOfBatch", true, "");
         
-//        numOfBatch.s;
-        options.addOption(input);
+        solutionOption.setRequired(true);
+        
+        Option numOfBatchOption = new Option("n", "numOfBatch", true, "");
+
+        Option verboseOption = new Option("v", "verbose", false, "Print some debug information during running.");
+        Option veryVerboseOption = new Option("vv", "very-verbose", false, "Print more debug information.");
+
+        
+        options.addOption(solutionOption);
         options.addOption(numOfBatchOption);
+        options.addOption(verboseOption);
+        options.addOption(veryVerboseOption);
         
 		CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
@@ -60,10 +67,17 @@ public class Main {
 
 		System.out.println(cmd.getArgList());
 
+		int debugLevel = 0;
+		if(cmd.hasOption("verbose")){
+			debugLevel = 1;
+		}
+		if(cmd.hasOption("very-verbose")){
+			debugLevel = 2;
+		}
         String solution = cmd.getOptionValue("solution");
 		int numOfBatch = Integer.valueOf(cmd.getOptionValue("numOfBatch", "200"));
 		System.out.println(solution);
-		Generator gen = new Generator(solution);	// <---- EDIT THIS LINE FOR DIFFERENT SOLUTIONS.
+		Generator gen = new Generator(solution, debugLevel);	// <---- EDIT THIS LINE FOR DIFFERENT SOLUTIONS.
 		long startTime = System.currentTimeMillis();
 		gen.generate(numOfBatch);
 		long estimatedTime = System.currentTimeMillis() - startTime;

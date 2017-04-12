@@ -63,7 +63,7 @@ public class Canvas {
 				//			ret += getWordAt(0, i, Direction.HORIZONTAL).str + "\n";
 				Character ch = getCharAt(x, y);
 				if(ch.equals(emptyStoneCellCharacter)){
-					ret += "2";
+					ret += " ";
 					//					continue;
 				}else{
 					ret += ch;}
@@ -94,31 +94,51 @@ public class Canvas {
 	}
 
 	void setCharAt(Character ch, int x, int y){
+		setCharAt(ch, x, y, false);
+	}
+	
+
+	void setCharAt(Character ch, int x, int y, boolean overWrite){
 		if(x>=dimx || y>=dimy){
 			return;
 		}
 
 		int pos = x + y*dimx;
+		if(! overWrite){ // Do not overwrite letters
+			if(! canvas[pos].equals(fillableCellCharacter)){
+				return;
+			}
+		}
 		canvas[pos] = ch;
 	}
 
 
 	void setWordH(String word, int x, int y){
-		for(int i = 0; i<word.length(); i++){
-			setCharAt(word.charAt(i), x+i, y);
-		}
-		listOfWords.add(word);
-		horizStarCoordinates.add(new Coordinate(x, y));
-		setCharAt(emptyStoneCellCharacter, x+word.length(), y);
+		setWordH(word, x, y, true);
 	}
 
 	void setWordV(String word, int x, int y){
+		setWordV(word, x, y, true);
+	}
+
+	void setWordV(String word, int x, int y, boolean overWrite){
 		for(int i = 0; i<word.length(); i++){
 			setCharAt(word.charAt(i), x, y+i);
 		}
 		listOfWords.add(word);
 		vertStarCoordinates.add(new Coordinate(x, y));
-		setCharAt(emptyStoneCellCharacter, x, y+word.length());
+		setCharAt(emptyStoneCellCharacter, x, y+word.length(), overWrite);
+	}
+	
+
+	private void setWordH(String word, int x, int y, boolean overWrite) {
+		for(int i = 0; i<word.length(); i++){
+			setCharAt(word.charAt(i), x+i, y);
+		}
+		listOfWords.add(word);
+		horizStarCoordinates.add(new Coordinate(x, y));
+		setCharAt(emptyStoneCellCharacter, x+word.length(), y, overWrite);
+		
 	}
 
 	@Override
@@ -209,13 +229,14 @@ public class Canvas {
 	public Canvas addWord(String word, int x, int y, Direction direction) {
 		Canvas other = new Canvas(this);
 		if(direction.equals(Direction.HORIZONTAL)){
-			other.setWordH(word, x, y);
+			other.setWordH(word, x, y, false);
 		}
 		else{
-			other.setWordV(word, x, y);
+			other.setWordV(word, x, y, false);
 		}
 		return other;
 	}
+
 
 	public List<Coordinate> getEmptyCoordinates(Direction direction) {
 		List<Coordinate> ret = new ArrayList<Coordinate>();

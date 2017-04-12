@@ -105,7 +105,8 @@ public class Generator {
 		}
 	}
 
-	public Generator(String sol) {
+	public Generator(String sol, int debugLevel) {
+		this.debug = debugLevel; 
 		setSolution(sol);
 		initCommon();
 	}
@@ -277,8 +278,8 @@ public class Generator {
 		
 		for(String word : words){
 			if(debug > 0){
-				if(x== 0 && y == 0){
-					System.err.println("fitWordAt(): START FROM THE BEGINNING!!! (" + word + ")");
+				if(1 == depth){
+					System.err.println("fitWordAt(): START FROM THE BEGINNING!!! (with: " + word + " from: x: " + x + " y: " + y + ")");
 				}
 				if(debug > 3){
 					System.err.println("fitWordAt(): setWord: " + word);
