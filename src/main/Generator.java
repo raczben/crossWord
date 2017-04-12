@@ -249,11 +249,19 @@ public class Generator {
 	private Canvas fitWordAt(Canvas canvas, Direction direction, int depth) throws LowPerformanceException{
 
 		List<Coordinate> coordinates = canvas.getEmptyCoordinates(direction);
-		Coordinate dim = coordinates.get(rndGen.nextInt(coordinates.size()));
+		Coordinate dim;
+		try {
+			dim = coordinates.get(rndGen.nextInt(coordinates.size()));
+			
+		// The random generator throws this, if the coordinates.size() is 0 this
+	    // means that there is no place where any word can be fitted. This is the real end of the generation.
+		} catch (IllegalArgumentException e) {
+			return canvas;
+		}
 
 		int x = dim.x;
 		int y = dim.y;
-		if(depth > solution.length()*2){
+		if(depth > solution.length()*3){
 			return canvas;
 		}
 
