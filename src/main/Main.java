@@ -37,9 +37,12 @@ public class Main {
         Option input = new Option("s", "solution", true, "This will be the "
         		+ "solution of the cross word game. (aka. This will be the first"
         		+ " vertical word on the canvas.)");
+
+        Option numOfBatchOption = new Option("n", "numOfBatch", true, "");
         
-        input.setRequired(true);
+//        numOfBatch.s;
         options.addOption(input);
+        options.addOption(numOfBatchOption);
         
 		CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
@@ -58,10 +61,11 @@ public class Main {
 		System.out.println(cmd.getArgList());
 
         String solution = cmd.getOptionValue("solution");
+		int numOfBatch = Integer.valueOf(cmd.getOptionValue("numOfBatch", "200"));
 		System.out.println(solution);
 		Generator gen = new Generator(solution);	// <---- EDIT THIS LINE FOR DIFFERENT SOLUTIONS.
 		long startTime = System.currentTimeMillis();
-		gen.generate();
+		gen.generate(numOfBatch);
 		long estimatedTime = System.currentTimeMillis() - startTime;
 		System.out.print("estimatedTime: " + estimatedTime + "ms");
 	}

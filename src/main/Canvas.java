@@ -16,57 +16,79 @@
  ******************************************************************************/
 package main;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import main.Pair;
 
 public class Canvas {
 	Character[] canvas;
 	int dimx, dimy;
-	
+
+	List<String> listOfWords;
+	private List<Coordinate> horizStarCoordinates;
+	private List<Coordinate> vertStarCoordinates;
+
 
 	// Where this character occurs the canvas can be filled with characters.
-	static final Character fillableCellCharacter = '1';		  
+	// This must be "." due to regexp pattern matching
+	static final Character fillableCellCharacter = '.';
+	// This cell should remain empty (Here will place the description of the words)
+	static final Character emptyStoneCellCharacter = '2';		  
 
 	public Canvas(int dimx, int dimy) {
 		this.dimx = dimx;
 		this.dimy = dimy;
 		generateCanvas();
-	}
-
-	public String toString() {
-		String ret = "";
-		for(int y = 0; y < dimy; y ++){
-			for(int x = 0; x < dimx; x ++){
-//			ret += getWordAt(0, i, Direction.HORIZONTAL).str + "\n";
-				Character ch = getCharAt(x, y);
-				if(null == ch){
-					ret += "2";
-//					continue;
-				}else{
-				ret += ch;}
-			}
-			ret += "\n";
-		}
-		return ret;
+		listOfWords = new ArrayList<String>();
+		horizStarCoordinates  = new ArrayList<Coordinate>();
+		vertStarCoordinates  = new ArrayList<Coordinate>();
 	}
 
 	public Canvas(Canvas other) {
 		this.dimx = other.dimx;
 		this.dimy = other.dimy;
 		this.canvas = other.canvas.clone();
+		listOfWords = new ArrayList<String>(other.listOfWords);
+		horizStarCoordinates = new ArrayList<Coordinate>(other.horizStarCoordinates);
+		vertStarCoordinates = new ArrayList<Coordinate>(other.vertStarCoordinates);
 	}
 
+
+	public String toString() {
+		String ret = listOfWords.toString()+ "\n\n";
+		for(int y = 0; y < dimy; y ++){
+			for(int x = 0; x < dimx; x ++){
+				//			ret += getWordAt(0, i, Direction.HORIZONTAL).str + "\n";
+				Character ch = getCharAt(x, y);
+				if(ch.equals(emptyStoneCellCharacter)){
+					ret += "2";
+					//					continue;
+				}else{
+					ret += ch;}
+			}
+			ret += "\n";
+		}
+		return ret;
+	}
 
 	private void generateCanvas() {
 		canvas = new Character[dimx*dimy];
 		Arrays.fill(canvas, fillableCellCharacter);
+		for(int x = 0; x<dimx; x++){
+			setCharAt(emptyStoneCellCharacter, x, 0);
+		}
+		for(int y = 0; y<dimy; y++){
+			setCharAt(emptyStoneCellCharacter, 0, y);
+		}
+		setCharAt(fillableCellCharacter, 0, 0);
 	}
 
 	Character getCharAt(int x, int y){
 		int pos = x + y*dimx;
 		if(x>=dimx || y>=dimy){
-			return null;
+			return emptyStoneCellCharacter;
 		}
 		return canvas[pos];
 	}
@@ -85,14 +107,18 @@ public class Canvas {
 		for(int i = 0; i<word.length(); i++){
 			setCharAt(word.charAt(i), x+i, y);
 		}
-		setCharAt(null, x+word.length(), y);
+		listOfWords.add(word);
+		horizStarCoordinates.add(new Coordinate(x, y));
+		setCharAt(emptyStoneCellCharacter, x+word.length(), y);
 	}
 
 	void setWordV(String word, int x, int y){
 		for(int i = 0; i<word.length(); i++){
 			setCharAt(word.charAt(i), x, y+i);
 		}
-		setCharAt(null, x, y+word.length());
+		listOfWords.add(word);
+		vertStarCoordinates.add(new Coordinate(x, y));
+		setCharAt(emptyStoneCellCharacter, x, y+word.length());
 	}
 
 	@Override
@@ -112,7 +138,7 @@ public class Canvas {
 			}else{
 				ch = getCharAt(x, i);
 			}
-			if(ch == null){
+			if(ch.equals(emptyStoneCellCharacter)){
 				return new Pair(ret, spaceLen);
 			}
 			if(ch != fillableCellCharacter){
@@ -121,6 +147,62 @@ public class Canvas {
 			spaceLen++;
 		}
 		return new Pair(ret, spaceLen);
+	}
+
+
+	String[] getWordAt(int x, int y, Direction direction, int prefLen){
+		String fullWord = new String();
+		String pref = new String();
+		String [] ret = new String[2];
+		int prefixCounter = 0;
+		ret[0] = pref;
+		ret[1] = fullWord;
+		String prefPart = "";
+
+
+		Character ch;
+		int start = direction.equals(Direction.HORIZONTAL) ? x:y;
+		for(int i= start ; i<dimx; i++){
+			if(direction.equals(Direction.HORIZONTAL)){
+				ch = getCharAt(i, y);
+			} else {	// VERTICAL
+				ch = getCharAt(x, i);
+			}
+			if(ch.equals(emptyStoneCellCharacter)){
+				return ret;
+			}
+			fullWord += ch;
+			if(prefixCounter < prefLen){
+				prefPart += ch;
+			}
+			if(ch != fillableCellCharacter){
+				prefixCounter++;
+				pref += prefPart;
+				prefPart = "";
+			}
+
+		}
+		return ret;
+	}
+
+
+	String getPatternAt(int x, int y, Direction direction){
+		String pattern = new String();
+
+		Character ch;
+		int start = direction.equals(Direction.HORIZONTAL) ? x:y;
+		for(int i= start ; i<dimx*2; i++){
+			if(direction.equals(Direction.HORIZONTAL)){
+				ch = getCharAt(i, y);
+			} else {	// VERTICAL
+				ch = getCharAt(x, i);
+			}
+			if(ch.equals(emptyStoneCellCharacter)){
+				return pattern;
+			}
+			pattern += ch;
+		}
+		return pattern;
 	}
 
 
@@ -134,6 +216,50 @@ public class Canvas {
 		}
 		return other;
 	}
-	
+
+	public List<Coordinate> getEmptyCoordinates(Direction direction) {
+		List<Coordinate> ret = new ArrayList<Coordinate>();
+		for(int i = 0; i<canvas.length; i++){
+			Character ch = canvas[i];
+			if(ch == emptyStoneCellCharacter){
+				Coordinate coordinate = index2Coordinate(i);
+
+				if(direction.equals(Direction.HORIZONTAL)){
+					coordinate.right();
+					if(horizStarCoordinates.contains(coordinate) ){
+						continue;
+					}
+				}
+				else if(direction.equals(Direction.VERTICAL)){
+					coordinate.down();
+					if(vertStarCoordinates.contains(coordinate) ){
+						continue;
+					}
+				}
+				if(coordinate.isIn(dimx, dimy)){
+					if( ! getCharAt(coordinate).equals(emptyStoneCellCharacter)){
+						ret.add(coordinate);
+					}
+				}
+			}
+		}
+		return ret;
+	}
+
+	private Object getCharAt(Coordinate coordinate) {
+		return getCharAt(coordinate.x, coordinate.y);
+	}
+
+	Coordinate index2Coordinate(int idx){
+		int x = idx;
+		int y = -1;
+		while(idx>=0){
+			x = idx;
+			y++;
+			idx -= dimx;
+		}
+		return new Coordinate(x, y);
+	}
+
 
 }

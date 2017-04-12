@@ -86,9 +86,9 @@ public class PerformanceMeter {
 			microCounter = 0;	// reset
 			
 			// The two condition of the low performance.
-			if(limit>Math.sqrt(performanceValue)/(double)count){
-				throw new LowPerformanceException("Performance val: " + performanceValue + " limit: " + limit + " count: " + count);
-			}
+//			if(limit>Math.sqrt(performanceValue)/(double)count){
+//				throw new LowPerformanceException("Performance val: " + performanceValue + " limit: " + limit + " count: " + count);
+//			}
 			if(maxCount < count){
 				throw new LowPerformanceException("Run count exceeds the max run: " + count);
 			}

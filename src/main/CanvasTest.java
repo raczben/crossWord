@@ -16,6 +16,10 @@
  ******************************************************************************/
 package main;
 import static org.junit.Assert.*;
+
+import java.util.Arrays;
+import java.util.List;
+
 import org.junit.Test;
 
 public class CanvasTest {
@@ -57,5 +61,25 @@ public class CanvasTest {
 		
 	}
 	
+
+	@Test
+	public void testGetEmptyCoordinates() {
+		Canvas cnv = new Canvas(7, 7);
+		cnv.setWordV("hello", 1, 1);
+		Coordinate[] exp1 = {new Coordinate(1, 1), new Coordinate(1, 2),
+				new Coordinate(1, 3), new Coordinate(1, 4), new Coordinate(1, 5),
+				new Coordinate(2, 6)};
+		List<Coordinate> coordinates = cnv.getEmptyCoordinates(Direction.HORIZONTAL);
+		assertEquals(6, coordinates.size());
+		Coordinate[] actual = coordinates.toArray(new Coordinate[0]);
+		assertArrayEqualsOrderless(exp1, actual);
+	}
+
+	static void  assertArrayEqualsOrderless(Object[] expected, Object[] prfises) {
+		Arrays.sort(prfises);	// Do sorting because the order is not matter.
+		Arrays.sort(expected);	// Do sorting because the order is not matter.
+		assertArrayEquals(expected, prfises);		
+	}
+
 
 }

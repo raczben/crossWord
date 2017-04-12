@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class Generator {
 
@@ -54,9 +56,11 @@ public class Generator {
 	private PerformanceMeter perfMet;
 
 	// The generator of the pseudo-random seed. 
-	private Random generator;
+	private Random rndGen;
 
-	
+	final static int prefixIndexHelperArray[][] = {{}, {0}, {1}, {0, 1}, {2}, {0, 2}, {1, 2}, {0, 1, 2}}; 
+
+
 	/**
 	 *  Constructor 
 	 * @param dimx
@@ -64,8 +68,21 @@ public class Generator {
 	 */
 	public Generator(int dimx, int dimy){
 		setDimension(dimx, dimy);			// Set the dimension
-		
+
 		initCommon();
+	}
+
+	/**
+	 * This constructor does not initialize anything just 
+	 * @param debug
+	 * @throws Exception
+	 */
+	Generator(boolean debug) throws Exception{
+		if(! debug){
+			throw new Exception("This constructor is for test/debug reason");
+		}
+		rndGen = new Random(0);
+		dictionaryWordsMap = new HashMap<String, List<String>>();
 	}
 
 	/**
@@ -74,7 +91,7 @@ public class Generator {
 	Generator(){
 		this(0, 0);
 	}
-	
+
 	private void initCommon(){
 		readWords();						// Read all words from the dictionary.
 		generateCanvas();					// Generate canvas
@@ -92,7 +109,7 @@ public class Generator {
 		setSolution(sol);
 		initCommon();
 	}
-	
+
 	public void setDimension(int dimx, int dimy){
 		this.dimx = dimx;					// Set the dimension
 		this.dimy = dimy;
@@ -117,7 +134,7 @@ public class Generator {
 	/**
 	 * Read all words and put them into the map.
 	 */
-	private void readWords(){
+	void readWords(){
 		dictionaryWordsMap = new HashMap<String, List<String>>();
 		String fileName = "hungarian" + ".txt";
 		System.out.println(fileName);
@@ -133,27 +150,7 @@ public class Generator {
 
 			String line;
 			while ((line = reader.readLine()) != null) {
-				//				if(line.length()>2){
-				line = line.toLowerCase();
-				line = replaceSpecials(line);
-				try{
-					dictionaryWordsMap.get(line.substring(0, 1)).add(line);
-				}
-				catch(Exception ex){
-					dictionaryWordsMap.put(line.substring(0, 1),  new ArrayList<String>());
-					dictionaryWordsMap.get(line.substring(0, 1)).add(line);
-				}
-				try{
-					dictionaryWordsMap.get(line.substring(0, 2)).add(line);
-				}
-				catch(Exception ex){
-					try{
-						dictionaryWordsMap.put(line.substring(0, 2),  new ArrayList<String>());
-						dictionaryWordsMap.get(line.substring(0, 2)).add(line);
-					}
-					catch(Exception ex1){
-					}
-				}
+				addDictionaryWord(line);
 			}            
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -166,16 +163,66 @@ public class Generator {
 	}
 
 	/**
+	 * @param word
+	 */
+	void addDictionaryWord(String word) {
+		//				if(line.length()>2){
+		word = word.toLowerCase();
+		word = replaceSpecials(word);
+		int prefixLen = 3;
+
+		String[] prefixes = generatePrefixes(word, prefixLen);
+		for(String prefix : prefixes){
+			try{
+				dictionaryWordsMap.get(prefix).add(word);
+			}
+			catch(Exception ex){
+				dictionaryWordsMap.put(prefix,  new ArrayList<String>());
+				dictionaryWordsMap.get(prefix).add(word);
+			}
+		}
+	}
+
+	String[] generatePrefixes(String word, int prefixLen) {
+		String fullPrefix;
+		try{
+			fullPrefix = word.substring(0, prefixLen);
+		} catch(IndexOutOfBoundsException ex){	// The word shorter than the prefixLen
+			fullPrefix = word;
+		}
+
+		prefixLen = fullPrefix.length();
+		int retLen = (int) (Math.pow(2, prefixLen))-1;
+		String[] ret = new String[retLen];
+		if(0 == retLen){
+			return ret;
+		}
+		ret[0] = fullPrefix;
+
+		for(int i = 0; i<retLen; i++){
+			int[] idxGroup =  prefixIndexHelperArray[i];
+			StringBuilder prefBuilder = new StringBuilder(fullPrefix);
+			for(int idx: idxGroup){
+				prefBuilder.setCharAt(idx, '.');
+			}
+			ret[i] = prefBuilder.toString();
+		}
+		return ret;
+	}
+
+	/**
 	 * Replaces all special characer in a word to simpler one.
 	 * Ex.: in Hungarian: long vowels to shorts.
 	 * @param line
 	 * @return
 	 */
-	private String replaceSpecials(String word) {
-		word.replaceAll("\u0243" , "o");	// long o
-		word.replaceAll("\u0337" , "\u0246");	// long o^
-		word.replaceAll("\u0369" , "\u0252");	// long u^
-		word.replaceAll("\u0237" , "i");	// long i^
+	static String replaceSpecials(String word) {
+		word = word.replaceAll("\u00F3" , "o");	// long o
+		word = word.replaceAll("\u0151" , "\u00F6");	// long o^
+		word = word.replaceAll("\u0171" , "\u00FC");	// long u^
+		word = word.replaceAll("\u00ED" , "i");	// long i^
+		word = word.replaceAll("\u00FA" , "u");	// long u
+		
 		return word;
 	}
 
@@ -186,7 +233,7 @@ public class Generator {
 	 */
 	public void setSolution(String sol) {
 		solution = sol;
-		setDimension(sol.length()+5, sol.length()+8);
+		setDimension(sol.length()+3, sol.length()+5);
 	}
 
 	/**
@@ -199,20 +246,27 @@ public class Generator {
 	 * @return	null if cannot match or the canvas if it match.
 	 * @throws LowPerformanceException	When the performance reach one of the criteria.
 	 */
-	private Canvas fitWordAt(int x, int y, Canvas canvas, Direction direction) throws LowPerformanceException{
-		if(x==dimx || y == solution.length()){
+	private Canvas fitWordAt(Canvas canvas, Direction direction, int depth) throws LowPerformanceException{
+
+		List<Coordinate> coordinates = canvas.getEmptyCoordinates(direction);
+		Coordinate dim = coordinates.get(rndGen.nextInt(coordinates.size()));
+
+		int x = dim.x;
+		int y = dim.y;
+		if(depth > solution.length()*2){
 			return canvas;
 		}
+
 		if(debug>1){
 			System.err.println("fitWordAt(): x =" + x + "  y: " +y);
 			if(debug > 2){
 				System.err.println("fitWordAt(): Canvas: >>\n" + toString() + "<<");
 			}
 		}
-		Pair wordpartPair = canvas.getWordAt(x, y, direction);
-		String wordpart = wordpartPair.str;
-		String[] words = getWordsContains(wordpart, wordpartPair.spaceLen);
-		int l = wordpart.length();
+		String pattern = canvas.getPatternAt(x, y, direction);
+
+		String[] words = getWordsMatchPattern(pattern);
+		
 		for(String word : words){
 			if(debug > 0){
 				if(x== 0 && y == 0){
@@ -223,16 +277,16 @@ public class Generator {
 				}
 			}
 
-			perfMet.newValue(Integer.max(x, y));
+			perfMet.newValue(depth);
 			if(x>3){
-				logCanvas(canvas, x, y);//printCanvas();
+				logCanvas(canvas, x, y);
 			}
 
 			Canvas retcanv;
 			if(direction.equals(Direction.VERTICAL)){
-				retcanv = fitWordAt(y, x, canvas.addWord(word.substring(l), x, y+l, Direction.VERTICAL), Direction.HORIZONTAL);
+				retcanv = fitWordAt(canvas.addWord(word, x, y, Direction.VERTICAL), Direction.HORIZONTAL, depth+1);
 			} else { // VERICAL
-				retcanv = fitWordAt(y+1, x, canvas.addWord(word.substring(l), x+l, y, Direction.HORIZONTAL), Direction.VERTICAL);
+				retcanv = fitWordAt(canvas.addWord(word, x, y, Direction.HORIZONTAL), Direction.VERTICAL, depth+1);
 			}
 
 			if(retcanv != null){
@@ -243,6 +297,46 @@ public class Generator {
 
 	}
 
+	/**
+	 * returns all  words from the dictionary, that matches the pattern. Pattern
+	 * should be a "limited regexp": Missing letters denoted by "." .  The
+	 * pattern belongs to the begin of the word. If the first 3 letters are
+	 * missing (aka. the pattern starts with "...") an empty array will be
+	 * return. Shorter words will matches longer patterns too.
+	 * 
+	 * Examples:
+	 * 	1	pattern: "baby" mathces only "baby"
+	 *  2	pattern: "b.b." mathces ex: "baby", "bab", "boba"...
+	 *  3	pattern: "...y.." mathes nothing (first 3 letters are missing)
+	 * 
+	 * @param pattern
+	 * @return
+	 */
+	String[] getWordsMatchPattern(String pattern) {
+		String prefix;
+		try{
+			prefix = pattern.substring(0, 3);
+		} catch(IndexOutOfBoundsException ex){	// The word shorter than the prefixLen
+			prefix = pattern;
+		}
+
+		List<String> beginMatchWords;
+		beginMatchWords = dictionaryWordsMap.get(prefix);
+		if(null == beginMatchWords){
+			return new String[0];
+		}
+		
+		List<String> ret = new ArrayList<String>();
+		for(String word :beginMatchWords){
+			if(word.length() <= pattern.length()){ // if the word not longer than the space...
+				String subPattern = pattern.substring(0, word.length());
+				if(word.matches(subPattern)){
+					ret.add(rndGen.nextInt(ret.size()+1), word);
+				}
+			}
+		}
+		return ret.toArray(new String[0]);
+	}
 
 	/**
 	 * Log for debug reason.
@@ -291,8 +385,8 @@ public class Generator {
 		for(String word :dictionaryWords1){
 			if(word.startsWith(wordpart) ){  //|| word.startsWith(wordpart, 1)
 				if(word.length()<=maxLen){
-					//					int insert = generator.nextInt(words.length);
-					ret.add(generator.nextInt(ret.size()+1), word);
+					//					int insert = rndGen.nextInt(words.length);
+					ret.add(rndGen.nextInt(ret.size()+1), word);
 					//					ret.add(word);
 				}
 			}
@@ -304,20 +398,28 @@ public class Generator {
 	/**
 	 * The GENERATE function. This starts/restarts the generation with different seeds.
 	 */
-	void generate(){
+	void generate(int numOfBatch){
 		generateCanvas();
-		_canvas_.setWordV(solution, 0, 0);
-		for(int i = 0; i<200; i++){
+		_canvas_.setWordV(solution, 1, 1);
+		for(int i = 0; i<numOfBatch; i++){
 			try {
-				generator = new Random(i);
+				rndGen = new Random(i);
 				perfMet.reset();
-				System.out.println(fitWordAt(0, 0, _canvas_, Direction.HORIZONTAL));
+				System.out.println(fitWordAt(_canvas_, Direction.HORIZONTAL, 1));
 			} catch (LowPerformanceException e) {
 				// TODO Auto-generated catch block
 				System.err.println(e);
 			}
 		}
 		System.out.println(_canvas_);
+	}
+
+	public String[] getAllDictionaryWords() {
+		Set<String> ret = new TreeSet<String>(); 
+		for(List<String> words : dictionaryWordsMap.values()){
+			ret.addAll( words);
+		}
+		return ret.toArray(new String[0]);
 	}
 
 
