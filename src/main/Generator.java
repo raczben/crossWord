@@ -72,6 +72,20 @@ public class Generator {
 		initCommon();
 	}
 
+	public Generator(Canvas cnv) {
+		_canvas_ = cnv;
+		setDimension(cnv.dimx, cnv.dimy);
+		readWords();						// Read all words from the dictionary.
+		perfMet = new PerformanceMeter(3);	// Create performance meter.
+
+		// Open the debug logfile.
+		try {
+			logFile = new PrintStream(new File("log.txt"));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+
 	/**
 	 * This constructor does not initialize anything just 
 	 * @param debug
@@ -223,7 +237,7 @@ public class Generator {
 		word = word.replaceAll("\u0171" , "\u00FC");	// long u^
 		word = word.replaceAll("\u00ED" , "i");	// long i^
 		word = word.replaceAll("\u00FA" , "u");	// long u
-		
+
 		return word;
 	}
 
@@ -253,19 +267,20 @@ public class Generator {
 		Coordinate dim;
 		try {
 			dim = coordinates.get(rndGen.nextInt(coordinates.size()));
-			
-		// The random generator throws this, if the coordinates.size() is 0 this
-	    // means that there is no place where any word can be fitted. This is the real end of the generation.
+
+			// The random generator throws this, if the coordinates.size() is 0 this
+			// means that there is no place where any word can be fitted. This is the real end of the generation.
 		} catch (IllegalArgumentException e) {
 			return canvas;
 		}
 
 		int x = dim.x;
 		int y = dim.y;
-		if(depth > solution.length()*3){
-			return canvas;
+		if(null != solution){
+			if(depth > solution.length()*3){
+				return canvas;
+			}
 		}
-
 		if(debug>1){
 			System.err.println("fitWordAt(): x =" + x + "  y: " +y);
 			if(debug > 2){
@@ -275,7 +290,7 @@ public class Generator {
 		String pattern = canvas.getPatternAt(x, y, direction);
 
 		String[] words = getWordsMatchPattern(pattern);
-		
+
 		for(String word : words){
 			if(debug > 0){
 				if(1 == depth){
@@ -334,7 +349,7 @@ public class Generator {
 		if(null == beginMatchWords){
 			return new String[0];
 		}
-		
+
 		List<String> ret = new ArrayList<String>();
 		for(String word :beginMatchWords){
 			if(word.length() <= pattern.length()){ // if the word not longer than the space...
@@ -407,9 +422,28 @@ public class Generator {
 	/**
 	 * The GENERATE function. This starts/restarts the generation with different seeds.
 	 */
-	void generate(int numOfBatch){
+	public void generate(int numOfBatch){
 		generateCanvas();
 		_canvas_.setWordV(solution, 1, 1);
+		for(int i = 0; i<numOfBatch; i++){
+			try {
+				rndGen = new Random(i);
+				perfMet.reset();
+				Canvas cnv = fitWordAt(_canvas_, Direction.HORIZONTAL, 1);
+				System.out.println(cnv);
+			} catch (LowPerformanceException e) {
+				// TODO Auto-generated catch block
+				System.err.println(e);
+			}
+		}
+		System.out.println(_canvas_);
+	}
+
+
+	/**
+	 * The GENERATE function. This starts/restarts the generation with different seeds.
+	 */
+	public void generateGui(int numOfBatch){
 		for(int i = 0; i<numOfBatch; i++){
 			try {
 				rndGen = new Random(i);

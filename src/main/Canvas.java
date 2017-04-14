@@ -93,12 +93,12 @@ public class Canvas {
 		return canvas[pos];
 	}
 
-	void setCharAt(Character ch, int x, int y){
+	public void setCharAt(Character ch, int x, int y){
 		setCharAt(ch, x, y, false);
 	}
 	
 
-	void setCharAt(Character ch, int x, int y, boolean overWrite){
+	public void setCharAt(Character ch, int x, int y, boolean overWrite){
 		if(x>=dimx || y>=dimy){
 			return;
 		}
