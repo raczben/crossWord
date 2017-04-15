@@ -43,6 +43,7 @@ public class PerformanceMeter {
 	// This is the value of the performance (from the last reset) Higher value
 	// means a solution is near, lover value means we should reset the generator.
 	// See newValue() for more details.
+	@SuppressWarnings("unused")
 	private double performanceValue;
 	
 	// This is the global maximum limit. If the count of the trying reach this

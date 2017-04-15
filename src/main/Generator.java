@@ -367,7 +367,7 @@ public class Generator implements Runnable{
 			if(word.length() <= pattern.length()){ // if the word not longer than the space...
 				char ch = Canvas.fillableCellCharacter;
 				try{
-					ch = pattern.charAt(word.length()+1);
+					ch = pattern.charAt(word.length());
 				} catch (Exception ex){}
 				if(ch<64){	// if not letter
 					String subPattern = pattern.substring(0, word.length());
@@ -496,7 +496,9 @@ public class Generator implements Runnable{
 					perfMet.reset();
 					mainGui.update(numOfBatch, i, goodCanvasList.size());
 					Canvas cnv = fitWordAt(_canvas_, Direction.HORIZONTAL, 1);
-					goodCanvasList.add(cnv);
+					if(null != cnv){
+						goodCanvasList.add(cnv);
+					}
 					System.out.println(cnv);
 				} catch (LowPerformanceException e) {
 					// TODO Auto-generated catch block

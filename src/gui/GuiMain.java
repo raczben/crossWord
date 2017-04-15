@@ -223,20 +223,23 @@ public class GuiMain {
 
 	public int setActiveCanvas(int idx) {
 		activeIndex = idx;
-		Canvas activeCanvas;
+//		activeCanvas;
 		
 		if(activeIndex<0){
 			activeIndex = 0;
 		} else if(activeIndex >= goodCanvasList.size()){
 			activeIndex = goodCanvasList.size()-1;
 		}
-		activeCanvas = goodCanvasList.get(activeIndex);
+//		activeCanvas = goodCanvasList.get(activeIndex);
+		if(null == goodCanvasList.get(activeIndex)){
+			throw new NullPointerException("Active Canvas is null");
+		}
 		
 		SwingUtilities.invokeLater(new Runnable() {
 
 			@Override
 			public void run() {
-				cnvEditor.load(activeCanvas);
+				cnvEditor.load(goodCanvasList.get(activeIndex));
 				settings.showResult();
 			}
 		});
