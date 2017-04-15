@@ -43,8 +43,9 @@ public class ConfigWriter {
             eventWriter.add(configStartElement);
             eventWriter.add(end);
             // Write the different nodes
-            createNode(eventWriter, ConfigLoader.NUMOFBATCH, cfg.numOfBatch.toString());
-            createNode(eventWriter, ConfigLoader.CANVAS, toString(cfg.cnv));
+            createNode(eventWriter, ConfigLoader.NUMOFBATCH,	cfg.numOfBatch.toString());
+            createNode(eventWriter, ConfigLoader.CANVAS, 		toString(cfg.cnv));
+            createNode(eventWriter, ConfigLoader.CANVAS_DEBUG, 	cfg.cnv.toString());
 //            createNode(eventWriter, "current", "0");
 //            createNode(eventWriter, "interactive", "0");
 

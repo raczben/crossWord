@@ -25,11 +25,13 @@ public class Settings extends JPanel {
 	CanvasEditor cnvEditor;
 	JSpinner spinnerX;
 	JSpinner spinnerY;
+	GuiMain mainGui; 
 
-	public Settings(int xDim, int yDim, CanvasEditor cnvEditorPAram) {
+	public Settings(int xDim, int yDim, GuiMain mainGui) {
+		this.mainGui = mainGui;
 		setMinimumSize(new Dimension(200, 100));
 		setMaximumSize(new Dimension(200, 100));
-		this.cnvEditor = cnvEditorPAram;
+		this.cnvEditor = mainGui.cnvEditor;
 		setPreferredSize(new Dimension(200, 100));
 		setLayout(null);
 
@@ -59,7 +61,8 @@ public class Settings extends JPanel {
 			public void actionPerformed(ActionEvent arg0) {
 				Canvas cnv = cnvEditor.toCanvas();
 				Generator generator =  new Generator(cnv);
-				generator.generateGui(100);
+				mainGui.generator = generator;
+				generator.generateGui(mainGui, 100);
 				
 			}
 		});

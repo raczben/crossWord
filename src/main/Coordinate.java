@@ -38,12 +38,21 @@ class Coordinate implements Comparable<Coordinate> {
 		return (other.x == x) && other.y == y;
 	}
 
-	public void right() {
-		x++;
+	public Coordinate right() {
+		return new Coordinate(x+1, y);
 	}
 	
-	public void down() {
-		y++;
+	public Coordinate down() {
+		return new Coordinate(x, y+1);
+	}
+	
+
+	public Coordinate up() {
+		return new Coordinate(x, y-1);
+	}
+	
+	public Coordinate left() {
+		return new Coordinate(x-1, y);
 	}
 
 	public boolean isIn(int dimx, int dimy) {

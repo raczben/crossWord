@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.util.Base64;
+
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -19,9 +20,8 @@ import main.Canvas;
 public class ConfigLoader {
 
 	static final String CANVAS = "canvas";
-//	static final String XDIM = "xdim";
-//	static final String YDIM = "ydim";
 	static final String NUMOFBATCH = "numOfBatch";
+	static final String CANVAS_DEBUG = "canvas_debug";
 	Config cfg;
 
 	

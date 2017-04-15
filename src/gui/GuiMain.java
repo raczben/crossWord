@@ -3,12 +3,12 @@ package gui;
 import java.awt.BorderLayout;
 import java.awt.ComponentOrientation;
 import java.awt.Dimension;
-import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
@@ -19,9 +19,12 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
+import main.Canvas;
+import main.Generator;
 import config.Config;
 import config.ConfigLoader;
 import config.ConfigWriter;
@@ -33,6 +36,10 @@ public class GuiMain {
 	JFrame guiFrame;
 	Config cfg;
 	CanvasEditor cnvEditor;
+	ControlGenerator ctrlGen;
+	@SuppressWarnings("unused")
+	private ArrayList<Canvas> goodCanvasList = null;
+	Generator generator;
 	
 	public GuiMain()
     {
@@ -66,13 +73,8 @@ public class GuiMain {
         guiFrame.setTitle("Example GUI");
         guiFrame.setSize(582,344);
       
-        //This will center the JFrame in the middle of the screen
         guiFrame.setLocationRelativeTo(null);
-//        cnvEditor.setSize(new Dimension(100, 100));
         guiFrame.getContentPane().setLayout(new BorderLayout(0, 0));
-        
-        JPanel panel_2 = new JPanel();
-        guiFrame.getContentPane().add(panel_2, BorderLayout.SOUTH);
         
         JPanel wrapper = new JPanel();
         wrapper.setAutoscrolls(true);
@@ -82,7 +84,7 @@ public class GuiMain {
         cnvEditor.setMaximumSize(new Dimension(120, 120));
         cnvEditor.setSize(new Dimension(120, 120));
         
-        Settings settings = new Settings(xDim, yDim, cnvEditor);
+        Settings settings = new Settings(xDim, yDim, this);
         JScrollPane scrollPane = new JScrollPane(wrapper);
         GroupLayout gl_wrapper = new GroupLayout(wrapper);
         gl_wrapper.setHorizontalGroup(
@@ -99,14 +101,15 @@ public class GuiMain {
         );
         wrapper.setLayout(gl_wrapper);
         guiFrame.getContentPane().add(scrollPane, BorderLayout.CENTER);
-//        guiFrame.getContentPane().add(cnvEditor);
-//        scrollPane.add(cnvEditor);
-        
-        JPanel panel_1 = new JPanel();
-        guiFrame.getContentPane().add(panel_1, BorderLayout.NORTH);
         settings.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
         settings.setMaximumSize(new Dimension(200, 200));
         guiFrame.getContentPane().add(settings, BorderLayout.EAST);
+                
+                JPanel panel_1 = new JPanel();
+                guiFrame.getContentPane().add(panel_1, BorderLayout.NORTH);
+                
+                ctrlGen = new ControlGenerator(this);
+                guiFrame.getContentPane().add(ctrlGen, BorderLayout.SOUTH);
         
         
         
@@ -147,27 +150,9 @@ public class GuiMain {
 						e1.printStackTrace();
 					}
     	        }
-    	            //This is where a real application would open the file.
-//    	        } else {
-//    	            log.append("Open command cancelled by user." + newline);
-//    	        }
         	}
 
         });
-//        mntmOpenload.addActionListener(new ActionListener() {
-//			
-//			@Override
-//			public void actionPerformed(ActionEvent e) {
-//				EventQueue.invokeLater(new Runnable() {
-//	                 public void run() {
-//	                     try {
-//	                ReadFileWithGui window = new ReadFileWithGui();
-//	                window.frame.setVisible(true);
-//	            } catch (Exception e) {
-//	                e.printStackTrace();
-//	            }
-//			}
-//		});
         mnFile.add(mntmOpenload);
         
         JMenuItem mntmSaveAs = new JMenuItem("Save As..");
@@ -197,10 +182,6 @@ public class GuiMain {
 						e1.printStackTrace();
 					}
     	        }
-    	            //This is where a real application would open the file.
-//    	        } else {
-//    	            log.append("Open command cancelled by user." + newline);
-//    	        }
         	}
 
         });
@@ -219,6 +200,25 @@ public class GuiMain {
 
 	private void applyConfig() {
 		this.cnvEditor.load(cfg.cnv);
+	}
+	
+	public void update(int all, int done, int success){
+		ctrlGen.updateStatus(all, done, success);
+	}
+
+	public void setGoodCanvasList(ArrayList<Canvas> goodCanvasList) {
+		this.goodCanvasList  = goodCanvasList;
+		SwingUtilities.invokeLater(new Runnable() {
+			
+			@Override
+			public void run() {
+				cnvEditor.load(goodCanvasList.get(0));
+			}
+		});
+	}
+
+	public Generator getGenerator() {
+		return generator;
 	}
     
 }

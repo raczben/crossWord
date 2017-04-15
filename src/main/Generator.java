@@ -16,6 +16,8 @@
  ******************************************************************************/
 package main;
 
+import gui.GuiMain;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -31,7 +33,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class Generator {
+public class Generator implements Runnable{
 
 	private String solution; 	// This should be find out by the user.
 
@@ -58,8 +60,13 @@ public class Generator {
 	// The generator of the pseudo-random seed. 
 	private Random rndGen;
 
+	private int numOfBatch;
+
 	final static int prefixIndexHelperArray[][] = {{}, {0}, {1}, {0, 1}, {2}, {0, 2}, {1, 2}, {0, 1, 2}}; 
 
+	Thread threadMe;
+
+	private GuiMain mainGui;
 
 	/**
 	 *  Constructor 
@@ -260,10 +267,14 @@ public class Generator {
 	 * @param direction	Find word in this direction (from the x-y position)
 	 * @return	null if cannot match or the canvas if it match.
 	 * @throws LowPerformanceException	When the performance reach one of the criteria.
+	 * @throws InterruptedException 
 	 */
-	private Canvas fitWordAt(Canvas canvas, Direction direction, int depth) throws LowPerformanceException{
+	private Canvas fitWordAt(Canvas canvas, Direction direction, int depth) throws LowPerformanceException, InterruptedException{
 
-		List<Coordinate> coordinates = canvas.getEmptyCoordinates(direction);
+		if(Thread.interrupted()){
+			throw new InterruptedException("IRQ in fitWord");
+		}
+		List<Coordinate> coordinates = canvas.getEmptyCoordinate2(direction);
 		Coordinate dim;
 		try {
 			dim = coordinates.get(rndGen.nextInt(coordinates.size()));
@@ -271,6 +282,7 @@ public class Generator {
 			// The random generator throws this, if the coordinates.size() is 0 this
 			// means that there is no place where any word can be fitted. This is the real end of the generation.
 		} catch (IllegalArgumentException e) {
+			System.out.println("REAL END:" + canvas);
 			return canvas;
 		}
 
@@ -429,7 +441,13 @@ public class Generator {
 			try {
 				rndGen = new Random(i);
 				perfMet.reset();
-				Canvas cnv = fitWordAt(_canvas_, Direction.HORIZONTAL, 1);
+				Canvas cnv = null;
+				try {
+					cnv = fitWordAt(_canvas_, Direction.HORIZONTAL, 1);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				System.out.println(cnv);
 			} catch (LowPerformanceException e) {
 				// TODO Auto-generated catch block
@@ -442,20 +460,13 @@ public class Generator {
 
 	/**
 	 * The GENERATE function. This starts/restarts the generation with different seeds.
+	 * @param mainGui 
 	 */
-	public void generateGui(int numOfBatch){
-		for(int i = 0; i<numOfBatch; i++){
-			try {
-				rndGen = new Random(i);
-				perfMet.reset();
-				Canvas cnv = fitWordAt(_canvas_, Direction.HORIZONTAL, 1);
-				System.out.println(cnv);
-			} catch (LowPerformanceException e) {
-				// TODO Auto-generated catch block
-				System.err.println(e);
-			}
-		}
-		System.out.println(_canvas_);
+	public void generateGui(GuiMain mainGui, int numOfBatch){
+		this.numOfBatch = numOfBatch;
+		this.mainGui = mainGui;
+		threadMe = new Thread(this);
+		threadMe.start();
 	}
 
 	public String[] getAllDictionaryWords() {
@@ -464,6 +475,38 @@ public class Generator {
 			ret.addAll( words);
 		}
 		return ret.toArray(new String[0]);
+	}
+
+	@Override
+	public void run() {
+		ArrayList<Canvas> goodCanvasList = new ArrayList<Canvas>();
+		try{
+			for(int i = 0; i<numOfBatch; i++){
+				try {
+					if(Thread.interrupted()){
+						throw new InterruptedException("IRQ in generate");
+					}
+					rndGen = new Random(i);
+					perfMet.reset();
+					mainGui.update(numOfBatch, i, goodCanvasList.size());
+					Canvas cnv = fitWordAt(_canvas_, Direction.HORIZONTAL, 1);
+					goodCanvasList.add(cnv);
+					System.out.println(cnv);
+				} catch (LowPerformanceException e) {
+					// TODO Auto-generated catch block
+					System.err.println(e);
+				}
+			}
+			System.out.println(_canvas_);
+		} catch (InterruptedException ex){
+		} finally{
+			mainGui.update(numOfBatch, numOfBatch, goodCanvasList.size());
+			mainGui.setGoodCanvasList(goodCanvasList);
+		}
+	}
+
+	public void stop() {
+		threadMe.interrupt();
 	}
 
 

@@ -38,9 +38,10 @@ public class Canvas implements Serializable{
 
 	// Where this character occurs the canvas can be filled with characters.
 	// This must be "." due to regexp pattern matching
-	static final Character fillableCellCharacter = '.';
+	public static final Character fillableCellCharacter = '.';
 	// This cell should remain empty (Here will place the description of the words)
-	static final Character emptyStoneCellCharacter = '2';		  
+	public static final Character emptyStoneCellCharacter = '2';
+	//	public static final int FILLABLE_AS_EMPTY = 1;		  
 
 	public Canvas(int dimx, int dimy) {
 		this.dimx = dimx;
@@ -90,18 +91,30 @@ public class Canvas implements Serializable{
 		setCharAt(fillableCellCharacter, 0, 0);
 	}
 
-	public Character getCharAt(int x, int y){
+	public Character getCharAt(int x, int y, int flag) {
 		int pos = x + y*dimx;
 		if(x>=dimx || y>=dimy){
 			return emptyStoneCellCharacter;
 		}
-		return canvas[pos];
+		if(x<0 || y<0){
+			return emptyStoneCellCharacter;
+		}
+		Character ch = canvas[pos];
+		//		if((flag & FILLABLE_AS_EMPTY) >0){
+		//			if (ch.equals(fillableCellCharacter)){
+		//				ch = Character.MIN_VALUE;
+		//			}
+		//		}
+		return ch;
+	}
+	public Character getCharAt(int x, int y){
+		return getCharAt(x, y, 0);
 	}
 
 	public void setCharAt(Character ch, int x, int y){
 		setCharAt(ch, x, y, false);
 	}
-	
+
 
 	public void setCharAt(Character ch, int x, int y, boolean overWrite){
 		if(x>=dimx || y>=dimy){
@@ -134,7 +147,7 @@ public class Canvas implements Serializable{
 		vertStarCoordinates.add(new Coordinate(x, y));
 		setCharAt(emptyStoneCellCharacter, x, y+word.length(), overWrite);
 	}
-	
+
 
 	private void setWordH(String word, int x, int y, boolean overWrite) {
 		for(int i = 0; i<word.length(); i++){
@@ -143,7 +156,7 @@ public class Canvas implements Serializable{
 		listOfWords.add(word);
 		horizStarCoordinates.add(new Coordinate(x, y));
 		setCharAt(emptyStoneCellCharacter, x+word.length(), y, overWrite);
-		
+
 	}
 
 	@Override
@@ -272,6 +285,44 @@ public class Canvas implements Serializable{
 		return ret;
 	}
 
+
+	public List<Coordinate> getEmptyCoordinate2(Direction direction) {
+		List<Coordinate> ret = new ArrayList<Coordinate>();
+		for(int i = 0; i<canvas.length; i++){
+			Character ch = canvas[i];
+			if(ch != emptyStoneCellCharacter){
+				Coordinate coordinate = index2Coordinate(i);
+
+				if(direction.equals(Direction.HORIZONTAL)){
+					Coordinate coordLeft = coordinate.left();
+					if(getCharAt(coordLeft).equals(emptyStoneCellCharacter)){
+						if(!horizStarCoordinates.contains(coordinate) ){
+							if(coordinate.isIn(dimx, dimy)){
+								ret.add(coordinate);
+							}
+						}
+					}
+				}
+				else if(direction.equals(Direction.VERTICAL)){
+					Coordinate coordUp = coordinate.up();
+					if(getCharAt(coordUp).equals(emptyStoneCellCharacter)){
+						if(!vertStarCoordinates.contains(coordinate) ){
+							if(coordinate.isIn(dimx, dimy)){
+								ret.add(coordinate);
+							}
+						}
+					}
+				}
+//				if(coordinate.isIn(dimx, dimy)){
+//					if( ! getCharAt(coordinate).equals(emptyStoneCellCharacter)){
+//						ret.add(coordinate);
+//					}
+//				}
+			}
+		}
+		return ret;
+	}
+
 	private Object getCharAt(Coordinate coordinate) {
 		return getCharAt(coordinate.x, coordinate.y);
 	}
@@ -294,6 +345,7 @@ public class Canvas implements Serializable{
 	public int getWidth() {
 		return dimx;
 	}
+
 
 
 }

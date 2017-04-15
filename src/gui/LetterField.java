@@ -10,8 +10,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import main.Canvas;
-
 public class LetterField extends JTextField {
 
 	/**

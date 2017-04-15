@@ -65,9 +65,9 @@ public class CanvasEditor extends JPanel {
 				try{
 					ch = new Character(textFields[x][y].getText().charAt(0));
 				} catch(StringIndexOutOfBoundsException strex){	// Empty cell
-					ch = '.';
+					ch = Canvas.fillableCellCharacter;
 				}
-				ret.setCharAt(ch, x, y);
+				ret.setCharAt(ch, x, y, true);
 			}
 		}
 
@@ -89,7 +89,10 @@ public class CanvasEditor extends JPanel {
 				texField.setColumns(1);
 				try{
 //					String text = textFields[x][y].getText();
-					texField.setText(canvas.getCharAt(x, y).toString());
+					Character ch = canvas.getCharAt(x, y);
+					if(! ch.equals(Canvas.fillableCellCharacter)){
+						texField.setText(ch.toString());
+					}
 				} catch(NullPointerException npex){
 					// The textFieldsOther is null.
 				} catch(ArrayIndexOutOfBoundsException aob){
