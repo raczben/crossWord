@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,19 +40,19 @@ public class Generator implements Runnable{
 
 	// Contains all available words. This is a map to helps for matching. The
 	// keys of the map is the starting letter(s) of the map.
-	private Map<String, List<String>> dictionaryWordsMap;
+	static Map<String, List<String>> dictionaryWordsMap;
 
 	// The canvas. This stores the letters/characters of the game.
-	private Canvas _canvas_;
+	Canvas _canvas_;
 
 	// Increment this field for more debug information.
-	private int debug = 1;
+	private static int debug = 1;
 
 	// Debug information file.
-	private PrintStream logFile;
+	private static PrintStream logFile;
 
 	// The dimension of the canvas.
-	private int dimx, dimy;
+//	private int dimx, dimy;
 
 	// The performance meter throw an exception when the performance of the
 	// generation is low in order to restart the generation with new seed. 
@@ -64,9 +65,13 @@ public class Generator implements Runnable{
 
 	final static int prefixIndexHelperArray[][] = {{}, {0}, {1}, {0, 1}, {2}, {0, 2}, {1, 2}, {0, 1, 2}}; 
 
-	Thread threadMe;
+	List<Thread> threads;
 
-	private GuiMain mainGui;
+	GuiMain mainGui;
+
+	private int seedcounter;
+
+	List<Canvas> goodCanvasList;
 
 	/**
 	 *  Constructor 
@@ -77,6 +82,7 @@ public class Generator implements Runnable{
 		setDimension(dimx, dimy);			// Set the dimension
 
 		initCommon();
+			
 	}
 
 	public Generator(Canvas cnv) {
@@ -91,6 +97,7 @@ public class Generator implements Runnable{
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
+		goodCanvasList = Collections.synchronizedList(new ArrayList<Canvas>());
 	}
 
 	/**
@@ -133,8 +140,8 @@ public class Generator implements Runnable{
 	}
 
 	public void setDimension(int dimx, int dimy){
-		this.dimx = dimx;					// Set the dimension
-		this.dimy = dimy;
+//		this.dimx = dimx;					// Set the dimension
+//		this.dimy = dimy;
 	}
 
 	/**
@@ -150,7 +157,7 @@ public class Generator implements Runnable{
 	 * 
 	 */
 	private void generateCanvas() {
-		_canvas_ = new Canvas(dimx, dimy);
+		_canvas_ = new Canvas(solution.length()+3, solution.length()+3);
 	}
 
 	/**
@@ -469,10 +476,10 @@ public class Generator implements Runnable{
 	 * @param mainGui 
 	 */
 	public void generateGui(GuiMain mainGui, int numOfBatch){
+		seedcounter = 0;
 		this.numOfBatch = numOfBatch;
 		this.mainGui = mainGui;
-		threadMe = new Thread(this);
-		threadMe.start();
+		new Thread(this).start();
 	}
 
 	public String[] getAllDictionaryWords() {
@@ -485,36 +492,42 @@ public class Generator implements Runnable{
 
 	@Override
 	public void run() {
-		ArrayList<Canvas> goodCanvasList = new ArrayList<Canvas>();
-		try{
-			for(int i = 0; i<numOfBatch; i++){
-				try {
-					if(Thread.interrupted()){
-						throw new InterruptedException("IRQ in generate");
-					}
-					rndGen = new Random(i);
-					perfMet.reset();
-					mainGui.update(numOfBatch, i, goodCanvasList.size());
-					Canvas cnv = fitWordAt(_canvas_, Direction.HORIZONTAL, 1);
-					if(null != cnv){
-						goodCanvasList.add(cnv);
-					}
-					System.out.println(cnv);
-				} catch (LowPerformanceException e) {
-					// TODO Auto-generated catch block
-					System.err.println(e);
-				}
+		seedcounter = 0;
+//		this.numOfBatch = numOfBatch;
+//		this.mainGui = mainGui;
+		threads = new ArrayList<Thread>();
+		threads.add(new GeneratorWorker(this));
+		threads.add(new GeneratorWorker(this));
+		threads.get(0).start();
+		threads.get(1).start();
+
+		for (Thread thread : threads){
+			try {
+				thread.join();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-			System.out.println(_canvas_);
-		} catch (InterruptedException ex){
-		} finally{
-			mainGui.update(numOfBatch, numOfBatch, goodCanvasList.size());
-			mainGui.setGoodCanvasList(goodCanvasList);
 		}
+
+		mainGui.update(numOfBatch, numOfBatch, goodCanvasList.size());
+		mainGui.setGoodCanvasList(goodCanvasList);
+//		new Thread(this);
+//		threadMe.start();
 	}
 
 	public void stop() {
-		threadMe.interrupt();
+		for (Thread thread : threads){
+			thread.interrupt();
+		}
+	}
+
+	public synchronized int getNextSeed() {
+		if(seedcounter == numOfBatch){
+			return -1;
+		}
+		mainGui.update(numOfBatch, seedcounter, goodCanvasList.size());
+		return seedcounter++;
 	}
 
 

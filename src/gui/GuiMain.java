@@ -8,10 +8,13 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
+import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -37,7 +40,7 @@ public class GuiMain {
 	Config cfg;
 	CanvasEditor cnvEditor;
 	ControlGenerator ctrlGen;
-	private ArrayList<Canvas> goodCanvasList = null;
+	private List<Canvas> goodCanvasList = null;
 	Generator generator;
 	Settings settings;
 	private int activeIndex;
@@ -78,6 +81,14 @@ public class GuiMain {
 		guiFrame.setLocationRelativeTo(null);
 		guiFrame.getContentPane().setLayout(new BorderLayout(0, 0));
 
+
+		String fileName = "appIcon_64.PNG";
+		System.out.println(fileName);
+		String path = "resources/" + fileName;
+		URL url = GuiMain.class.getResource(path);
+		ImageIcon img = new ImageIcon(url);
+		guiFrame.setIconImage(img.getImage());
+		
 		JPanel wrapper = new JPanel();
 		wrapper.setAutoscrolls(true);
 
@@ -208,7 +219,7 @@ public class GuiMain {
 		ctrlGen.updateStatus(all, done, success);
 	}
 
-	public void setGoodCanvasList(ArrayList<Canvas> goodCanvasList) {
+	public void setGoodCanvasList(List<Canvas> goodCanvasList) {
 		this.goodCanvasList  = goodCanvasList;
 		setActiveCanvas(0);
 	}
