@@ -46,6 +46,8 @@ public class CanvasEditor extends JPanel {
 		revalidate();
 		repaint();
 	}
+	
+	
 
 	public void setLetterFocus(int x, int y) {
 		x = (x+textFields.length)%textFields.length;
@@ -70,6 +72,35 @@ public class CanvasEditor extends JPanel {
 		}
 
 		return ret;
+	}
+	
+	void load(Canvas canvas){
+		removeAll();
+		int col = canvas.getWidth();
+		int row = canvas.getHeight();
+		textFields = new JTextField[col][row];
+		setPreferredSize(new Dimension(col*40, row*40));
+		setLayout(new GridLayout(row, col));
+		for(int y = 0 ; y < row ; y++){
+			for(int x = 0 ; x < col ; x++){
+				JTextField texField = new LetterField(x, y, this);
+				add(texField);
+				textFields[x][y] = texField;
+				texField.setColumns(1);
+				try{
+//					String text = textFields[x][y].getText();
+					texField.setText(canvas.getCharAt(x, y).toString());
+				} catch(NullPointerException npex){
+					// The textFieldsOther is null.
+				} catch(ArrayIndexOutOfBoundsException aob){
+					// The textFieldsOther is smaller.
+				}
+			}
+		}
+//		this.textFields = textFieldsNew;
+		setVisible(true);
+		revalidate();
+		repaint();
 	}
 
 

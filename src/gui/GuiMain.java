@@ -3,9 +3,16 @@ package gui;
 import java.awt.BorderLayout;
 import java.awt.ComponentOrientation;
 import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -15,13 +22,21 @@ import javax.swing.JScrollPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
+import config.Config;
+import config.ConfigLoader;
+import config.ConfigWriter;
+
 public class GuiMain {
 	
 	int xDim = 3;
 	int yDim = 3;
+	JFrame guiFrame;
+	Config cfg;
+	CanvasEditor cnvEditor;
+	
 	public GuiMain()
     {
-		
+		cfg = new Config();
 		
 		 try {
 	            // Set cross-platform Java L&F (also called "Metal")
@@ -43,7 +58,7 @@ public class GuiMain {
 		 
 		 
 		 
-        JFrame guiFrame = new JFrame();
+        guiFrame = new JFrame();
         guiFrame.setPreferredSize(new Dimension(500, 500));
         
         //make sure the program exits when the frame closes
@@ -62,7 +77,7 @@ public class GuiMain {
         JPanel wrapper = new JPanel();
         wrapper.setAutoscrolls(true);
         
-        CanvasEditor cnvEditor = new CanvasEditor(xDim, yDim);
+        cnvEditor = new CanvasEditor(xDim, yDim);
         cnvEditor.setMinimumSize(new Dimension(120, 120));
         cnvEditor.setMaximumSize(new Dimension(120, 120));
         cnvEditor.setSize(new Dimension(120, 120));
@@ -95,18 +110,115 @@ public class GuiMain {
         
         
         
-        JMenuBar menuBar = new JMenuBar();
+        JMenuBar menuBar = setupMenu();
         guiFrame.setJMenuBar(menuBar);
-        
-        JMenu mnFile = new JMenu("File");
-        menuBar.add(mnFile);
-        
-        JMenuItem mntmQuit = new JMenuItem("Quit");
-        mnFile.add(mntmQuit);
         
         
         //make sure the JFrame is visible
         guiFrame.setVisible(true);
     }
+	
+	/**
+	 * @return
+	 */
+	private JMenuBar setupMenu() {
+		JMenuBar menuBar = new JMenuBar();
+        
+        JMenu mnFile = new JMenu("File");
+        menuBar.add(mnFile);
+        
+        JMenuItem mntmOpenload = new JMenuItem("Open (Load)...");
+        mntmOpenload.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent e) {
+
+        		final JFileChooser fc = new JFileChooser();
+//        		fc.setFileFilter(filter);
+        		int returnVal = fc.showOpenDialog(guiFrame);
+
+    	        if (returnVal == JFileChooser.APPROVE_OPTION) {
+    	            File file = fc.getSelectedFile();
+    	            System.out.println("Opening: " + file.getName() + ".");
+    	            ConfigLoader cfgloader = new ConfigLoader();
+    	            try {
+						cfg = cfgloader.readConfig(new FileInputStream(file));
+						applyConfig();
+					} catch (FileNotFoundException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+    	        }
+    	            //This is where a real application would open the file.
+//    	        } else {
+//    	            log.append("Open command cancelled by user." + newline);
+//    	        }
+        	}
+
+        });
+//        mntmOpenload.addActionListener(new ActionListener() {
+//			
+//			@Override
+//			public void actionPerformed(ActionEvent e) {
+//				EventQueue.invokeLater(new Runnable() {
+//	                 public void run() {
+//	                     try {
+//	                ReadFileWithGui window = new ReadFileWithGui();
+//	                window.frame.setVisible(true);
+//	            } catch (Exception e) {
+//	                e.printStackTrace();
+//	            }
+//			}
+//		});
+        mnFile.add(mntmOpenload);
+        
+        JMenuItem mntmSaveAs = new JMenuItem("Save As..");
+        mnFile.add(mntmSaveAs);
+        mntmSaveAs.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent e) {
+
+        		final JFileChooser fc = new JFileChooser();
+//        		fc.setFileFilter(filter);
+        		int returnVal = fc.showSaveDialog(guiFrame);
+        		System.out.println(returnVal);
+
+    	        if (returnVal == JFileChooser.APPROVE_OPTION) {
+    	            File file = fc.getSelectedFile();
+    	            System.out.println("Opening: " + file.getName() + ".");
+    	            ConfigWriter cfgwriter = new ConfigWriter();
+    	            cfgwriter.setFile(file.getAbsolutePath());
+    	            try {
+    	            	cfg.cnv = cnvEditor.toCanvas();
+						cfgwriter.saveConfig(cfg);
+//						applyConfig();
+					} catch (FileNotFoundException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} catch (Exception e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+    	        }
+    	            //This is where a real application would open the file.
+//    	        } else {
+//    	            log.append("Open command cancelled by user." + newline);
+//    	        }
+        	}
+
+        });
+        
+        JMenuItem mntmSave = new JMenuItem("Save");
+        mnFile.add(mntmSave);
+        
+        JMenuItem mntmQuit = new JMenuItem("Quit");
+        mnFile.add(mntmQuit);
+        
+        JMenuItem mntmNewMenuItem = new JMenuItem("New menu item");
+        mnFile.add(mntmNewMenuItem);
+		return menuBar;
+	}
+	
+
+	private void applyConfig() {
+		this.cnvEditor.load(cfg.cnv);
+	}
     
 }

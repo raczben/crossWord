@@ -16,13 +16,18 @@
  ******************************************************************************/
 package main;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import main.Pair;
 
-public class Canvas {
+public class Canvas implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6689475818605371120L;
 	Character[] canvas;
 	int dimx, dimy;
 
@@ -85,7 +90,7 @@ public class Canvas {
 		setCharAt(fillableCellCharacter, 0, 0);
 	}
 
-	Character getCharAt(int x, int y){
+	public Character getCharAt(int x, int y){
 		int pos = x + y*dimx;
 		if(x>=dimx || y>=dimy){
 			return emptyStoneCellCharacter;
@@ -280,6 +285,14 @@ public class Canvas {
 			idx -= dimx;
 		}
 		return new Coordinate(x, y);
+	}
+
+	public int getHeight() {
+		return dimy;
+	}
+
+	public int getWidth() {
+		return dimx;
 	}
 
 

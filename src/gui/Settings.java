@@ -15,7 +15,6 @@ import javax.swing.event.ChangeListener;
 import main.Canvas;
 import main.Generator;
 
-import java.awt.GridLayout;
 
 public class Settings extends JPanel {
 	/**
