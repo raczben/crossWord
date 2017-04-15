@@ -365,9 +365,15 @@ public class Generator implements Runnable{
 		List<String> ret = new ArrayList<String>();
 		for(String word :beginMatchWords){
 			if(word.length() <= pattern.length()){ // if the word not longer than the space...
-				String subPattern = pattern.substring(0, word.length());
-				if(word.matches(subPattern)){
-					ret.add(rndGen.nextInt(ret.size()+1), word);
+				char ch = Canvas.fillableCellCharacter;
+				try{
+					ch = pattern.charAt(word.length()+1);
+				} catch (Exception ex){}
+				if(ch<64){	// if not letter
+					String subPattern = pattern.substring(0, word.length());
+					if(word.matches(subPattern)){
+						ret.add(rndGen.nextInt(ret.size()+1), word);
+					}
 				}
 			}
 		}
