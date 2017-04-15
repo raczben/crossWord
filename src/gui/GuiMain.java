@@ -37,9 +37,9 @@ public class GuiMain {
 	Config cfg;
 	CanvasEditor cnvEditor;
 	ControlGenerator ctrlGen;
-	@SuppressWarnings("unused")
-	private ArrayList<Canvas> goodCanvasList = null;
+	ArrayList<Canvas> goodCanvasList = null;
 	Generator generator;
+	Settings settings;
 	
 	public GuiMain()
     {
@@ -84,7 +84,7 @@ public class GuiMain {
         cnvEditor.setMaximumSize(new Dimension(120, 120));
         cnvEditor.setSize(new Dimension(120, 120));
         
-        Settings settings = new Settings(xDim, yDim, this);
+        settings = new Settings(xDim, yDim, this);
         JScrollPane scrollPane = new JScrollPane(wrapper);
         GroupLayout gl_wrapper = new GroupLayout(wrapper);
         gl_wrapper.setHorizontalGroup(
@@ -213,6 +213,7 @@ public class GuiMain {
 			@Override
 			public void run() {
 				cnvEditor.load(goodCanvasList.get(0));
+				settings.showResult();
 			}
 		});
 	}
